@@ -1,0 +1,14 @@
+\begin{figure*}[!t]
+    \centering
+    \includegraphics[width=0.49\textwidth]{figures/nav_explanation.pdf}
+    \hfill
+    \includegraphics[width=0.49\textwidth]{figures/nav_explanation_ratio_mean_neg.pdf}
+\caption{
+\textbf{Localizing the harmful updates.}
+Under relaxed clipping $[0,5]$, masking only trigger tokens $\mathcal T$ still
+collapses, while masking the non-trigger suffix $\mathcal H_\kappa$ or broader
+scopes keeps both accuracy and negative-advantage importance ratios stable.
+Results are on Qwen2.5-Math-7B.
+}
+    \label{fig:nav_explanation}
+\end{figure*}

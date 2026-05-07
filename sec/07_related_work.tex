@@ -1,0 +1,25 @@
+\section{Related Work}
+\label{sec:relatedworks}
+We summarize key related work here and provide a more detailed discussion
+in Appendix~\ref{app:more_related_work}. Practical RLVR systems are partially
+off-policy due to rollout reuse
+~\citep{shao2024deepseekmathpushinglimitsmathematical,
+huggingface_openr1_update3}, rollout--training decoupling in modern RL systems
+~\citep{sheng2025hybridflow, slime_github, fu2025areal,
+noukhovitch2024asynchronous, zhong2025streamrl, he2025history}, and
+training--inference mismatch~\citep{qi2025defeating}. Prior work stabilizes
+off-policy RLVR using clipping or trust-region variants, including ratio
+clipping~\citep{yu2025dapoopensourcellmreinforcement}, approximate trust
+regions~\citep{fu2025areal}, sequence-level clipping~\citep{zheng2025group},
+asymmetric clipping~\citep{roux2025tapered, arnal2025asymmetric}, and
+gradient-preserving clipping~\citep{su2025klear, chen2025minimax}. The closest
+work to ours is M2PO~\citep{zheng2025prosperitycollapsefaroffpolicy}, which
+controls instability through batch-level masking of high-variance tokens. In
+contrast, we push GRPO to extreme rollout staleness, diagnose its failure mode as
+localized negative-advantage suffix drift, and stabilize training with a simple
+trigger--scope filter. Our work complements synchronous/hybrid
+orchestration systems~\citep{sheng2025hybridflow, slime_github} and
+asynchronous RLVR systems~\citep{fu2025areal, zhong2025streamrl,
+han2025asyncflow, noukhovitch2024asynchronous}: we study how to increase GRPO's
+algorithmic tolerance to rollout staleness, reducing synchronization
+pressure in both settings. \ourmethod{} realizes this tolerance in a synchronous large-stage framework, where rollout generation and optimization are executed sequentially across stages rather than overlapped in parallel asynchronously.

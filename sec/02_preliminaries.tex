@@ -1,0 +1,83 @@
+\section{Preliminaries: GRPO and Rollout Staleness}
+\label{sec:preliminaries}
+We briefly review Group Relative Policy Optimization
+(GRPO)~\citep{shao2024deepseekmathpushinglimitsmathematical} and define rollout
+staleness. Let $\beta$ denote the behavior policy that generates rollouts and
+$\pi_\theta$ the policy being optimized.
+
+\paragraph{GRPO objective.} For each prompt $x\sim\mathcal D$, the behavior policy $\beta$ samples a group
+of $G$ responses $\{y_i\}_{i=1}^G$, where $y_i=(a_{i,1},\ldots,a_{i,T_i})$.
+Each response receives a scalar reward $R_i$. GRPO estimates advantages by
+normalizing rewards within the group:
+\begin{equation}
+    A_i
+    =
+    \frac{
+        R_i - \operatorname{mean}(\{R_1,\ldots,R_G\})
+    }{
+        \operatorname{std}(\{R_1,\ldots,R_G\})
+    } .
+    \label{eq:grpo-adv}
+\end{equation}
+The same response-level advantage $A_i$ is assigned to all tokens in response
+$y_i$.
+
+For token $a_{i,t}$, with prefix state $s_{i,t}=(x,a_{i,<t})$, define the
+token-level importance ratio
+$
+    \rho_{i,t}(\theta)
+    =
+    \frac{
+        \pi_\theta(a_{i,t}\mid s_{i,t})
+    }{
+        \beta(a_{i,t}\mid s_{i,t})
+    } .
+    \label{eq:token-ratio-prelim}
+$
+GRPO optimizes
+\begin{equation}
+\begin{aligned}
+    \mathcal J_{\mathrm{GRPO}}(\theta)
+    =
+    \mathbb E_{x\sim\mathcal D,\; \{y_i\}\sim\beta}
+    \left[
+    \frac{1}{G}\sum_{i=1}^G
+    \frac{1}{T_i}\sum_{t=1}^{T_i}
+    \min\left(
+        \rho_{i,t}(\theta) A_i,\,
+        \operatorname{clip}
+        \big(\rho_{i,t}(\theta),1-\epsilon,1+\epsilon\big) A_i
+    \right)
+    \right].
+\end{aligned}
+\label{eq:grpo-obj}
+\end{equation}
+The implemented training loss is $-\mathcal J_{\mathrm{GRPO}}$. 
+A KL term $-\lambda_{\mathrm{KL}} D_{\mathrm{KL}}\!\left(
+\pi_\theta \,\|\, \pi_{\mathrm{ref}}
+\right)$ is optionally applied.
+
+\paragraph{Rollout staleness $\mu$.} GRPO training alternates between rollout generation and policy optimization.
+At the beginning of each cycle, the current policy is frozen as the behavior
+policy $\beta$, which generates a fixed rollout batch used for several policy
+updates before the next refresh.
+
+Let $B_{\mathrm{train}}$ denote the number of prompt groups generated in one
+rollout phase, where each prompt group contains $G$ sampled responses. Let
+$B_{\mathrm{mini}}$ denote the number of prompt groups consumed by one policy
+update. Therefore, a
+single rollout generation phase supports $\mu = {B_{\rm train}}/{B_{\rm mini}}$ model updates, which we refer to as the \textit{rollout staleness}.
+
+During these $\mu$ updates, $\theta$ changes while the behavior policy $\beta$
+and the stored rollout log-probabilities remain fixed. Thus later updates within
+the same cycle optimize against increasingly stale data. A strictly on-policy
+algorithm corresponds to $\mu=1$, where every update uses freshly generated
+rollouts. 
+
+GRPO is therefore a \emph{near on-policy} algorithm, with $\mu$ typically set to a small value (e.g., $\mu\,$=$\,4$~\citep{zheng2025act,wang2025reinforcement,yu2025dapoopensourcellmreinforcement,chen2025minimax,zheng2025group}) to control policy drift under PPO-style clipped updates. 
+While it is generally understood that a large $\mu$ degrades performance,\textbf{ we show in this work that substantially larger values of \boldmath $\mu$ are feasible}, achieving comparable or improved performance while accelerating training.
+
+Throughout the paper, one \emph{model update} refers to one optimizer update on
+one minibatch, and \emph{batch size} refers to $B_{\mathrm{mini}}$, the number of prompt groups for
+one optimizer update, unless stated
+otherwise.

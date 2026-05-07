@@ -1,0 +1,12 @@
+\begin{figure*}[tbh]
+\centering
+\includegraphics[width=0.9\textwidth]{figures/framework.pdf}
+\caption{
+\textbf{System-level comparison between standard GRPO \boldmath ($\mu\,$=$\,4$) and \boldmath \ourmethod\ ($\mu\,$=$\,1024$).}
+Standard GRPO tightly interleaves rollout generation and optimization, requiring frequent weight synchronization and co-resident training states during generation.
+In contrast, \ourmethod\ decouples rollout generation from policy optimization, reducing synchronization frequency and memory contention, and enabling higher rollout throughput. Each step in the figure corresponds to a single model update.
+}
+
+
+    \label{fig:framework}
+\end{figure*}

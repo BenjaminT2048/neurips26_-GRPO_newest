@@ -1,0 +1,145 @@
+\section{Experiments}
+\label{sec:experiment}
+
+\paragraph{Models \& Datasets.}
+We evaluate \ourmethod\ on five language models: Llama-3.2-3B-Instruct~\citep{grattafiori2024llama3herdmodels}, Qwen2.5-Math-7B~\citep{yang2024qwen25mathtechnicalreportmathematical}, Qwen3-Base-1.7B and 8B~\citep{yang2025qwen3technicalreport}, and DeepSeek-7B~\citep{shao2024deepseekmathpushinglimitsmathematical}.
+We use a context length of 4k for Qwen2.5-Math-7B, which is the maximum supported by this model, and 8k for all other models. For training, we adopt the DeepScaleR~\citep{sun2025improvingdataefficiencyllm} mathematics dataset.
+
+\paragraph{Training \& Evaluation.}
+We implement all methods in verl~\citep{Sheng_2025}, with 
+vLLM~\citep{kwon2023efficientmemorymanagementlarge} for rollout generation and
+FSDP~\citep{zhao2023pytorchfsdpexperiencesscaling} for actor optimization. Each
+configuration is trained for 4096 model update steps with batch size 32, giving the same rollout-sample budget. We evaluate GRPO under both low- and high-staleness settings
+($\mu=4$ and $\mu=1024$), and set $\mu=1024$ for \ourmethod{} and M2PO. High-staleness GRPO uses the same two-phase large-stage rollout pipeline as \ourmethod{} but optimizes the GRPO objective with default clipping range and no negative-advantage veto. Thus,
+\ourmethod{} performs four rollout generation stages, each followed by 1024 updates, as illustrated in \cref{fig:teaser}. For GRPO, we set
+$\epsilon=0.2$ and omit the KL loss following prior
+work~\citep{yu2025dapoopensourcellmreinforcement,zheng2025prosperitycollapsefaroffpolicy}.
+For M2PO, we use the recommended second-moment threshold of $0.04$.
+
+We use a fully aligned wall-clock measurement protocol on
+identical hardware configurations with $4\times$H200 GPUs, including both rollout generation and policy
+optimization. For
+evaluation, we use five widely adopted math reasoning benchmarks:
+AMC23/24~\citep{aops_amc}, AIME24/25~\citep{aops_aime}, and
+Math500~\citep{hendrycks2021measuringmathematicalproblemsolving,lightman2023letsverifystepstep}.
+Models are evaluated every 200 model updates, and we report the checkpoint with
+the best average performance across all benchmarks.
+Additional experimental details are provided in Appendix~\ref{app:details}.
+
+\input{tables/performance_comparison}
+\subsection{Main Results}
+\label{sec:analysis}
+We analyze the results in \cref{tab:performance_comparison} along two dimensions: final
+reasoning performance and wall-clock efficiency, measured by rollout-generation
+time $T_{\mathrm{rollout}}$ and end-to-end training time $T_{\mathrm{total}}$.
+
+
+\textbf{\boldmath $\mu$-GRPO \textit{vs.} High-Staleness GRPO: Recovering performance under the same large-$\mu$ regime.}
+Naively increasing GRPO to $\mu\!=\!1024$ reduces rollout-generation and
+wall-clock time, but degrades accuracy. Under the same
+high-staleness setting, $\mu$-GRPO recovers this performance loss while retaining
+the efficiency benefits of large-stage rollout execution. It improves average
+accuracy from 41.8\% to 48.0\% on Qwen2.5-Math-7B and from 60.2\% to 68.6\% on
+DeepSeek-7B. The gains are visible on harder benchmarks such as
+AIME24/25. This consistent gap shows that the stabilization mechanisms in
+$\mu$-GRPO are critical for turning high-staleness data reuse into effective learning. 
+
+
+
+
+% \textbf{\boldmath $\mu$-GRPO \textit{vs.} GRPO}: \textit{Higher efficiency with comparable performance.}
+% Compared to the standard low-staleness GRPO baseline ($\mu\!=\!4$), $\mu$-GRPO
+% matches or improves average accuracy on four out of five models, with the largest
+% gain on DeepSeek-7B (68.6\% vs.\ 66.1\%). At the same time, $\mu$-GRPO
+% substantially reduces training cost: averaged across models, it reduces
+% $T_{\mathrm{rollout}}$ by \textbf{1.82$\times$} and $T_{\mathrm{total}}$ by
+% \textbf{1.53$\times$}. These results show that $\mu$-GRPO largely preserves the
+% performance of near-on-policy GRPO while significantly reducing both rollout
+% generation time and end-to-end wall-clock training time.
+
+
+% \textbf{\boldmath \ourmethod{} \textit{vs.} M2PO}: 
+% \textit{Competitive accuracy with higher system efficiency.}
+% M2PO is a strong large-staleness baseline for stabilizing off-policy GRPO.
+% At the same staleness level ($\mu=1024$), \ourmethod{} achieves competitive
+% average accuracy, outperforming M2PO on four out of five models while trailing
+% on Qwen3-Base-8B. Its main advantage is system efficiency: averaged across
+% models, \ourmethod{} reduces $T_{\mathrm{rollout}}$ by \textbf{1.87$\times$}
+% and $T_{\mathrm{total}}$ by \textbf{1.49$\times$} compared with M2PO.
+% This indicates that \ourmethod{} offers a stronger performance--efficiency
+% trade-off by combining large-stage rollout generation with simple
+% staleness-robust optimization.
+
+\textbf{\boldmath \ourmethod{} vs. Standard GRPO and M2PO: Better performance--efficiency trade-off.}
+Against standard GRPO ($\mu\!=\!4$), \ourmethod{} matches or improves average
+accuracy on four out of five models, with the largest gain on
+DeepSeek-7B (68.6\% vs.\ 66.1\%), while reducing $T_{\mathrm{rollout}}$ by
+{1.82$\times$} and $T_{\mathrm{total}}$ by {1.53$\times$} on
+average. Compared to M2PO at $\mu\!=\!1024$, \ourmethod{} achieves competitive accuracy while
+reducing $T_{\mathrm{rollout}}$ by {1.87$\times$} and
+$T_{\mathrm{total}}$ by {1.49$\times$}. M2PO confirms that high-staleness
+rollouts can remain learnable, while
+\ourmethod{} more directly converts this tolerance into rollout and wall-clock
+efficiency gains. Overall, \ourmethod{} achieves a stronger performance--efficiency trade-off.
+
+
+\paragraph{Evaluation Results on Coding Tasks.}
+As a test beyond math reasoning, we train Qwen2.5-Coder-7B~\citep{hui2024qwen25codertechnicalreport}
+on the \texttt{code\_contests} dataset~\citep{sun2026improvingdataefficiencyllm}
+and evaluate on LiveCodeBench~\citep{jain2024livecodebenchholisticcontaminationfree}, using the same setup as in the main experiments, except for a minibatch size of
+16. 
+% Both GRPO and \ourmethod{} are trained for 4096
+% model updates, and
+% \ourmethod{} uses four rollout stages. 
+Starting from 8.2\% accuracy, GRPO and \ourmethod{} reach comparable
+accuracies of 39.3\% and 38.6\%. However, \ourmethod{} reduces
+wall-clock training time from 98.9h to 45.7h, yielding a 2.16$\times$ speedup.
+This suggests that the efficiency benefit of large-$\mu$ training can transfer to coding tasks without sacrificing performance.
+
+
+% \paragraph{Asynchronous Execution.}
+% \begin{wraptable}{r}{0.56\textwidth}
+% \vspace{-1.2em}
+% \centering
+% \setlength{\tabcolsep}{0.15cm}
+% \small
+% \caption{Asynchronous execution on Qwen2.5-Math-7B. }
+% \label{tab:async}
+% \begin{tabular}{ccccc}
+% \toprule
+% Method & Stale Cap & Avg.$\uparrow$ & $T_{\mathrm{total}}$\,(h)$\downarrow$ & Idle Ratio $\downarrow$ \\
+% \midrule
+% GRPO & 4 & 47.9 & 22.3 & 24.2\% \\
+% $\mu$-GRPO & 1024 & 47.7 & {17.4} & {0.6\%} \\
+% \bottomrule
+% \end{tabular}
+% \vspace{-1.0em}
+% \end{wraptable}
+% We further evaluate GRPO and $\mu$-GRPO in a fully asynchronous rollout--training setup. Rollout workers and trainers are pinned to separate devices and run continuously; in our setup, $4\times$H200 GPUs are split evenly, with two GPUs for rollout generation and two GPUs for training. The trainer consumes samples from a rollout queue while the rollout workers keep generating with the latest synchronized policy. 
+% The trainer periodically synchronizes updated policy parameters to the rollout
+% workers, and a staleness cap controls the oldest rollout data that the trainer
+% may consume. For async \ourmethod{}, we choose this cap so that the maximum
+% rollout lag matches $\mu=1024$ in the synchronous staged setting.
+% Async $\mu$-GRPO uses the same asynchronous infrastructure as async GRPO, but replaces the trainer-side update with relaxed clipping and negative-advantage veto. This evaluates whether the staleness tolerance shown in the synchronous large-stage setting also benefits execution-level asynchronous decoupling; it is not the exact staged schedule in Figure~\ref{fig:framework}. As shown in Table~\ref{tab:async}, async $\mu$-GRPO maintains comparable accuracy while reducing training time from 22.3h to 17.4h. Its trainer idle ratio, measured as the fraction of trainer step time spent waiting for and assembling rollout samples, drops from 24.2\% to 0.6\%, indicating that larger tolerated rollout lag substantially reduces trainer blocking.
+
+\paragraph{Asynchronous Execution.}
+\begin{wraptable}{r}{0.56\textwidth}
+\vspace{-1.25em}
+\centering
+\setlength{\tabcolsep}{0.2cm}
+\renewcommand{\arraystretch}{0.8}
+\footnotesize
+\caption{Asynchronous execution on Qwen2.5-Math-7B.}
+\vspace{-0.6em}
+\label{tab:async}
+\begin{tabular}{ccccc}
+\toprule
+Method & Max Lag & Avg.$\uparrow$ & $T_{\mathrm{total}}$\,(h)$\downarrow$ & Idle Ratio$\,(\%)\downarrow$ \\
+\midrule
+GRPO & 4 & 47.9 & 22.3 & 24.2 \\
+$\mu$-GRPO & 1024 & 47.7 & \textbf{17.4} & \textbf{0.6} \\
+\bottomrule
+\end{tabular}
+\vspace{-1.2em}
+\end{wraptable}
+Unlike the synchronous staged setting in \cref{fig:framework}, we evaluate GRPO and $\mu$-GRPO in a fully asynchronous setup with rollout workers and trainers running in parallel on separate devices. We use $4\times$H200 GPUs, split evenly between rollout workers and trainers. Rollout samples are streamed through a queue, and workers periodically receive synchronized policy parameters. With periodic synchronization, samples may lag behind the trainer policy; we cap the maximum lag for async $\mu$-GRPO to match the $\mu=1024$ staleness level of the synchronous setting. Async $\mu$-GRPO uses the same infrastructure as async GRPO, but replaces the trainer-side update with relaxed clipping and negative-advantage veto. This tests whether $\mu$-GRPO's staleness tolerance transfers from serial staged training to parallel asynchronous execution. As shown in \cref{tab:async}, async $\mu$-GRPO maintains comparable accuracy while reducing training time from 22.3h to 17.4h; the trainer idle ratio, defined as the fraction of total trainer step time spent waiting for rollout samples, drops from 24.2\% to 0.6\%. 

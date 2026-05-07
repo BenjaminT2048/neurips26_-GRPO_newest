@@ -1,0 +1,57 @@
+% \begin{table*}[t]
+%   \caption{Effect of rollout staleness under a fixed generation budget on Qwen2.5-Math-7B.
+% All settings perform 4{,}096 model update steps with a batch size of 32, while varying the staleness level $\mu \in \{512, 1024, 2048\}$.
+% }
+%   \label{tab:staleness_ablation}
+%   \centering
+%   \small
+% \begin{sc}
+%   \begin{tabular}{cccccccc}
+%     \toprule
+%     Staleness ($\mu$) 
+%     & AMC23 & AMC24 
+%     & AIME24 & AIME25 
+%     & Math500 
+%     & Avg 
+%     & \#Stage \\
+%     \midrule
+%     $512$  
+%       & 65.6 & 43.9 & 30.8 & 13.3 & 82.9 & 47.3 & 8 \\
+%     $1024$ 
+%       & 63.1 & 47.2 & 31.5 & 16.5 & 81.7 & \textbf{48.0} & 4 \\
+%     $2048$ 
+%       & 65.7 & 40.6 & 28.1 & 16.9 & 79.1 & 46.1 & 2 \\
+%     \bottomrule
+%   \end{tabular}
+% \end{sc}
+%   \vskip -0.1in
+% \end{table*}
+
+\begin{table}[t]
+\centering
+\setlength{\tabcolsep}{0.47cm}
+\caption{\textbf{Effect of staleness under a fixed optimization budget.}
+All settings perform 4{,}096 model update steps with a batch size of 32,
+while varying the staleness level $\mu$. Experiments are conducted with Qwen2.5-Math-7B. The default setting has gray background.} 
+\label{tab:staleness_ablation}
+\small
+\begin{tabular}{cccccccc}
+\toprule
+\scriptsize $\mu$
+& \scriptsize AMC23
+& \scriptsize AMC24
+& \scriptsize AIME24
+& \scriptsize AIME25
+& \scriptsize MATH500
+& \scriptsize Avg.
+& \scriptsize \#Stage \\
+\midrule
+512  & 65.6 & 43.9 & 30.8 & 13.3 & 82.9 & 47.3 & 8 \\
+\rowcolor{gray!20} 1024  & 63.1 & 47.2 & 31.5 & 16.5 & 81.7 & \textbf{48.0} & 4 \\
+2048 
+  & 65.7 & 40.6 & 28.1 & 16.9 & 79.1 & 46.1 & 2 \\
+\bottomrule
+\end{tabular}
+
+\end{table}
+

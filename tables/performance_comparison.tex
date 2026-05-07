@@ -1,0 +1,172 @@
+% \begin{table*}[tbh]
+% \tabcolsep 2.3pt
+% \caption{\textbf{Performance and efficiency comparison} across five math reasoning benchmarks using five models. Rollout Tok/s and Time (h) measure rollout throughput and total wall-clock training time. Bold numbers denote the best average accuracy and shortest wall-clock training time.}
+% \label{tab:performance_comparison}
+% \centering
+% \small
+% \begin{sc}
+% \begin{tabular}{c|c|ccccc|c|cc}
+% \toprule
+% Methods & $\mu$
+% & AMC23 & AMC24
+% & AIME24 & AIME25
+% & Math500
+% & Avg.
+% & Rollout$_\text{tok/s}$
+% & Time$_\text{h}$ \\
+% \midrule\midrule
+
+% \multicolumn{10}{c}{Llama-3.2-3B-Instruct} \\
+% \midrule
+% GRPO & 4
+% & 25.0 & 20.6 & 12.3 & 0.2 & 55.1 & 22.6 & 14.3k & 22.7 \\
+% GRPO & 1024
+% & 21.9 & 12.2 & 9.8 & 0.6 & 46.8 & 18.3 & 36.2k & 19.3 \\
+% M2PO & 1024
+% & 30.6 & 15.0 & 10.6 & 0.2 & 50.7 & 21.4 & 14.1k & 21.3 \\
+% \ourmethod & 1024
+% & 29.4 & 17.7 & 14.0 & 0.5 & 52.8 & \textbf{22.9} & 39.3k & \textbf{18.6} \\
+% \midrule
+
+% \multicolumn{10}{c}{Qwen2.5-Math-7B} \\
+% \midrule
+% GRPO & 4
+% & 68.1 & 42.8 & 29.0 & 15.8 & 81.0 & 47.3 & 19.2k & 23.7 \\
+% GRPO & 1024
+% & 61.3 & 36.2 & 23.3 & 9.8 & 78.2 & 41.8 & 46.3k & 17.9 \\
+% M2PO & 1024
+% & 66.9 & 40.6 & 29.6 & 14.6 & 82.5 & 46.8 & 25.6k & 20.2 \\
+% \ourmethod & 1024
+% & 63.1 & 47.2 & 31.5 & 16.5 & 81.7 & \textbf{48.0} & 45.2k & \textbf{18.1} \\
+% \midrule
+
+% \multicolumn{10}{c}{Qwen3-Base-1.7B} \\
+% \midrule
+% GRPO & 4
+% & 42.5 & 27.2 & 7.5 & 3.8 & 66.6 & 29.5 & 21.2k & 20.5 \\
+% GRPO & 1024
+% & 32.5 & 19.3 & 7.7 & 4.5 & 63.5 & 25.5 & 38.5k & 13.3 \\
+% M2PO & 1024
+% & 35.0 & 24.4 & 10.0 & 4.4 & 66.6 & 28.1 & 14.8k & 24.2 \\
+% \ourmethod & 1024
+% & 40.8 & 24.9 & 7.5 & 6.5 & 68.7 & \textbf{29.7} & 43.4k & \textbf{12.4} \\
+% \midrule
+
+% \multicolumn{10}{c}{Qwen3-Base-8B} \\
+% \midrule
+% GRPO & 4
+% & 68.8 & 53.3 & 23.5 & 19.4 & 86.3 & \textbf{50.3} & 18.6k & 58.2 \\
+% GRPO & 1024
+% & 59.6 & 43.2 & 17.6 & 11.2 & 74.6 & 41.2 & 32.4k & 23.6 \\
+% M2PO & 1024
+% & 65.6 & 53.9 & 24.2 & 19.6 & 87.1 & 50.1 & 17.1k & 49.7 \\
+% \ourmethod & 1024
+% & 69.4 & 51.1 & 21.5 & 17.4 & 81.8 & 48.2 & 31.0k & \textbf{25.9} \\
+% \midrule
+
+% \multicolumn{10}{c}{DeepSeek-7B} \\
+% \midrule
+% GRPO & 4
+% & 91.4 & 66.7 & 46.8 & 33.2 & 92.4 & 66.1 & 28.5k & 61.9 \\
+% GRPO & 1024
+% & 82.6 & 63.5 & 39.5 & 26.8 & 88.7 & 60.2 & 33.3k & 54.5 \\
+% M2PO & 1024
+% & 90.6 & 69.4 & 50.8 & 35.0 & 93.0 & 67.8 & 29.8k & 68.3 \\
+% \ourmethod & 1024
+% & 93.1 & 68.9 & 50.2 & 37.9 & 92.8 & \textbf{68.6} & 37.5k & \textbf{51.3} \\
+% \bottomrule
+% \end{tabular}
+% \end{sc}
+% \end{table*}
+
+\begin{table*}[tbh]
+\tabcolsep 2.3pt
+% \caption{\textbf{Performance and efficiency comparison} across five math reasoning benchmarks using five models.
+% $T_{\mathrm{rollout}}$ denotes the cumulative wall-clock time of all rollout-generation phases across training, while
+% $T_{\mathrm{total}}$ denotes the end-to-end wall-clock training time.
+% \textbf{Bold} marks the best Avg.; \underline{{underline}} marks the fastest $T_{\mathrm{total}}$ among methods no worse than the Avg. of standard GRPO.}
+\caption{{Performance (\%) and efficiency comparison} across five math reasoning benchmarks and five models. 
+% $T_{\mathrm{rollout}}$ and $T_{\mathrm{total}}$ measure rollout-generation and end-to-end training time, respectively. 
+\textbf{Bold} marks the best Avg.; \underline{underline} marks the fastest $T_{\mathrm{total}}$ among methods no worse than standard GRPO in Avg. Overall, $\mu$-GRPO achieves the strongest performance--efficiency trade-off.}
+\label{tab:performance_comparison}
+\centering
+\small
+\begin{sc}
+\begin{tabular}{c|c|ccccc|c|cc}
+\toprule
+Methods & $\mu$
+& AMC23 & AMC24
+& AIME24 & AIME25
+& Math500
+& Avg. $\uparrow$
+& $T_\mathrm{rollout}$\,\textnormal{(h)} $\downarrow$
+& $T_\mathrm{total}$\,\textnormal{(h)} $\downarrow$ \\
+\midrule\midrule
+
+\multicolumn{10}{c}{Llama-3.2-3B-Instruct} \\
+\midrule
+GRPO & 4
+& 25.0 & 20.6 & 12.3 & 0.2 & 55.1 & 22.6 & 15.1 & 22.7 \\
+GRPO & 1024
+& 21.9 & 12.2 & 9.8 & 0.6 & 46.8 & 18.3 & 13.2 & 19.3 \\
+M2PO & 1024
+& 30.6 & 15.0 & 10.6 & 0.2 & 50.7 & 21.4 & 15.3 & 21.3 \\
+\rowcolor{gray!20}
+\ourmethod & 1024
+& 29.4 & 17.7 & 14.0 & 0.5 & 52.8 & \textbf{22.9} & 12.7 & \underline{{18.6}} \\
+\midrule
+
+\multicolumn{10}{c}{Qwen2.5-Math-7B} \\
+\midrule
+GRPO & 4
+& 68.1 & 42.8 & 29.0 & 15.8 & 81.0 & 47.3 & 8.8 & 23.7 \\
+GRPO & 1024
+& 61.3 & 36.2 & 23.3 & 9.8 & 78.2 & 41.8 & 3.8 & 17.9 \\
+M2PO & 1024
+& 66.9 & 40.6 & 29.6 & 14.6 & 82.5 & 46.8 & 6.7 & 20.2 \\
+\rowcolor{gray!20}
+\ourmethod & 1024
+& 63.1 & 47.2 & 31.5 & 16.5 & 81.7 & \textbf{48.0} & 4.7 & \underline{{18.1}} \\
+\midrule
+
+\multicolumn{10}{c}{Qwen3-Base-1.7B} \\
+\midrule
+GRPO & 4
+& 42.5 & 27.2 & 7.5 & 3.8 & 66.6 & 29.5 & 11.2 & 20.5 \\
+GRPO & 1024
+& 32.5 & 19.3 & 7.7 & 4.5 & 63.5 & 25.5 & 6.5 & 13.3 \\
+M2PO & 1024
+& 35.0 & 24.4 & 10.0 & 4.4 & 66.6 & 28.1 & 12.9 & 24.2 \\
+\rowcolor{gray!20}
+\ourmethod & 1024
+& 40.8 & 24.9 & 7.5 & 6.5 & 68.7 & \textbf{29.7} & 5.2 & \underline{{12.4}} \\
+\midrule
+
+\multicolumn{10}{c}{Qwen3-Base-8B} \\
+\midrule
+GRPO & 4
+& 68.8 & 53.3 & 23.5 & 19.4 & 86.3 & \textbf{50.3} & 21.3 & \underline{{58.2}} \\
+GRPO & 1024
+& 59.6 & 43.2 & 17.6 & 11.2 & 74.6 & 41.2 & 7.4 & 23.6 \\
+M2PO & 1024
+& 65.6 & 53.9 & 24.2 & 19.6 & 87.1 & 50.1 & 23.2 & 49.7 \\
+\rowcolor{gray!20}
+\ourmethod & 1024
+& 69.4 & 51.1 & 21.5 & 17.4 & 81.8 & 48.2 & 7.9 & {25.9} \\
+\midrule
+
+\multicolumn{10}{c}{DeepSeek-7B} \\
+\midrule
+GRPO & 4
+& 91.4 & 66.7 & 46.8 & 33.2 & 92.4 & 66.1 & 26.0 & 61.9 \\
+GRPO & 1024
+& 82.6 & 63.5 & 39.5 & 26.8 & 88.7 & 60.2 & {22.3} & 54.5 \\
+M2PO & 1024
+& 90.6 & 69.4 & 50.8 & 35.0 & 93.0 & 67.8 & {27.9} & 68.3 \\
+\rowcolor{gray!20}
+\ourmethod & 1024
+& 93.1 & 68.9 & 50.2 & 37.9 & 92.8 & \textbf{68.6} & 21.4 & \underline{{51.3}} \\
+\bottomrule
+\end{tabular}
+\end{sc}
+\end{table*}

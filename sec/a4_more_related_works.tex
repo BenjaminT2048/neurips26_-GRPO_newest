@@ -1,0 +1,50 @@
+\section{More Related Work}
+\label{app:more_related_work}
+
+\paragraph{Off-policy RLVR.}
+Despite being framed as on-policy methods, practical RLVR implementations are
+inherently off-policy: rollout data are reused across multiple gradient
+updates~\citep{shao2024deepseekmathpushinglimitsmathematical,
+huggingface_openr1_update3}; modern RL systems decouple rollout generation from
+training for throughput~\citep{fu2025areal, slime_github,
+noukhovitch2024asynchronous, zhong2025streamrl, he2025history}; and
+training--inference mismatch from numerical precision differences can introduce
+additional distribution shift~\citep{qi2025defeating}. To stabilize training
+under off-policy conditions, prior work has proposed various strategies to
+control policy updates, including ratio clipping~\citep{yu2025dapoopensourcellmreinforcement},
+approximate trust regions~\citep{fu2025areal}, sequence-level
+clipping~\citep{zheng2025group}, asymmetric clipping~\citep{roux2025tapered,
+arnal2025asymmetric}, and gradient-preserving clipping~\citep{su2025klear,
+chen2025minimax}. While these methods improve RLVR under moderate staleness, most focus on
+relatively small staleness values and do not explicitly identify why naive
+large-staleness GRPO fails. M2PO~\citep{zheng2025prosperitycollapsefaroffpolicy}
+is the closest work to ours. It identifies excessive clipping under staleness and
+the prosperity-before-collapse phenomenon, where training without a trust region
+initially improves before eventually collapsing. M2PO addresses these issues by
+constraining the second moment of importance weights at the batch level to
+selectively mask high-variance tokens. In contrast, we diagnose the failure mode
+of large-$\mu$ GRPO as localized negative-advantage suffix drift and stabilize
+training with a simple trigger--scope filter, without requiring batch-level
+second-moment statistics or iterative token masking. Moreover, our work
+introduces an off-policy training paradigm that fully decou-
+ples generation and optimization to fundamentally address
+the efficiency bottleneck, an aspect M2PO does not explore.
+
+\paragraph{RLVR Efficiency.}
+RLVR systems improve efficiency through both synchronous/hybrid orchestration and
+asynchronous execution. In synchronous pipelines, rollout generation and policy
+optimization often alternate between inference and training engines. To make
+frequent switching practical, systems may keep part of the training state
+resident on GPU during rollout, reducing reload overhead but limiting memory
+available for high-throughput inference. Hybrid orchestration frameworks such as
+HybridFlow/verl improve scheduling across these engines~\citep{sheng2025hybridflow,
+slime_github}, but frequent rollout refreshes and weight synchronization can
+remain a bottleneck when the RL algorithm only tolerates low staleness. Asynchronous and streaming systems instead overlap rollout workers and trainers
+through queues or streamed data transfer~\citep{fu2025areal, zhong2025streamrl,
+han2025asyncflow, noukhovitch2024asynchronous}. These systems improve utilization,
+but still benefit from staleness-robust objectives because larger tolerated
+rollout lag reduces synchronization pressure. \ourmethod{} is complementary to
+both directions: by stabilizing GRPO at $\mu=1024$, it reduces rollout refreshes
+and weight synchronizations, enabling rollout generation to run as a standalone
+phase that can fully use GPU memory for inference, while also permitting larger
+lag in asynchronous pipelines.

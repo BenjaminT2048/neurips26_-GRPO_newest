@@ -1,0 +1,37 @@
+
+
+\subsection{Ablation Study}
+
+
+\input{tables/staleness_fixed_epoch}
+\paragraph{Effect of Staleness with a Fixed Generation Budget.}
+To isolate the value of reusing stale rollout data, we first generate a fixed
+rollout dataset by sampling 8 responses for each prompt in the DeepScaleR
+training set, and then optimize only on this dataset. Under this setting, the batch size determines both the number of updates and the
+effective staleness $\mu$: smaller batches yield more updates but higher
+staleness, while larger batches reduce staleness but shorten training.
+\cref{tab:batch-mu-ablation} varies the batch size in $\{32,64,128,256\}$.
+Batch size 32 ($\mu=1259$) achieves the best average accuracy of 44.2\%, while
+batch size 256 drops to 41.9\%. This suggests that rollout data remain useful
+for many updates, and that additional updates can outweigh the cost of
+higher staleness.
+
+
+\paragraph{Effect of Staleness with a Fixed Optimization Budget.}
+\cref{tab:staleness_ablation} fixes the total number of model updates and varies
+the effective staleness $\mu$ by changing the rollout refresh frequency, or
+equivalently the number of generation--optimization stages. Performance remains
+stable from $\mu\!=\!512$ to $\mu\!=\!2048$, but degrades when using a single stage
+($\mu\!=\!4096$). Among these settings, $\mu\!=\!1024$ provides the best average
+accuracy and is therefore adopted as the
+default configuration.
+
+
+
+% Intuitively, low staleness may seem preferable, as the training data remains more representative of the current policy.
+% Yet larger batch sizes necessarily imply fewer gradient steps, resulting in coarser optimization that may fail to fully exploit the learning signal contained in the data.
+% On the other hand, although smaller batch sizes lead to higher staleness, they enable more frequent and finer-grained policy updates.
+% Such fine-grained updates can improve sample efficiency by allowing the optimizer to make incremental adjustments based on smaller subsets of the data, which often leads to better generalization and more stable convergence.
+
+
+

@@ -1,0 +1,287 @@
+\section{Prefix-Support Mismatch in Retained Harmful Suffixes}
+\label{app:prefix-divergence}
+This section formalizes the prefix-support mismatch mechanism identified in
+\cref{sec:diagnosis}. We show why retaining \(\mathcal H_\kappa\)-tokens can be
+unstable even when their local importance ratios are not tiny: the behavior
+policy may assign non-negligible mass to these suffix tokens, while the current
+policy assigns very small mass to the prefixes needed to reach them.
+
+We follow the notation in Section~\ref{sec:preliminaries}: $\beta$ denotes the behavior policy, $\pi_\theta$ denotes the current policy, and $\rho_t(\theta)$ denotes the token-level importance ratio. For notational simplicity, we drop the response index and write a response as $y=(a_1,\ldots,a_T)$.  Assume a finite decoding horizon $T$; variable-length responses can be represented by padding with EOS tokens. Let $\lambda$ be any fixed distribution over token positions $t\in\{1,\ldots,T\}$ with $\lambda_t\ge 0$ and $\sum_t \lambda_t=1$.
+
+For a token occurrence
+\(z=(x,y,t)\), define the behavior token-occurrence measure
+\[
+    d\nu_\beta(x,y,t)
+    =
+    d\mathcal D(x)\,\lambda_t\,\beta(y\mid x),
+\]
+and the current-prefix occurrence measure
+\[
+    d\nu_\theta^{\mathrm{pre}}(x,y,t)
+    =
+    d\mathcal D(x)\,\lambda_t\,
+    \pi_\theta(a_{<t}\mid x)\,
+    \beta(a_{t:T}\mid x,a_{<t}).
+\]
+Thus \(\nu_\theta^{\mathrm{pre}}\) changes only the prefix occupancy from
+\(\beta\) to \(\pi_\theta\), while keeping the replay suffix conditional under
+\(\beta\). Whenever \(\beta(a_{<t}\mid x)>0\),
+\[
+    \frac{d\nu_\theta^{\mathrm{pre}}}{d\nu_\beta}(x,y,t)
+    =
+    R_{t-1}(\theta)
+    :=
+    \frac{\pi_\theta(a_{<t}\mid x)}{\beta(a_{<t}\mid x)}
+    =
+    \prod_{j=1}^{t-1}
+    \rho_j(\theta),
+\]
+where
+\[
+    \rho_t(\theta)
+    :=
+    \frac{\pi_\theta(a_t\mid x,a_{<t})}
+         {\beta(a_t\mid x,a_{<t})}.
+\]
+
+Recall from Section~\ref{sec:diagnosis} that the {trigger boundary} is the first trigger-token position
+\[
+    \kappa(y)
+    :=
+    \min\{t:\, A(y)<0,\ \rho_t(\theta)<\tau_c\},
+\]
+with $\kappa(y)=\infty$ if the set is empty. The non-trigger suffix is
+\[
+    \mathcal H_\kappa(y)
+    :=
+    \{t>\kappa(y):\, A(y)<0,\ \rho_t(\theta)\ge \tau_c\}.
+\]
+Let \(\mathcal U_{\mathcal H}(\theta)\subseteq\{(x,y,t): t\in \mathcal H_\kappa(y)\}\) denote any
+retained subset of these \(\mathcal H_\kappa\)-tokens. If the update rule retains all of \(\mathcal H_\kappa(y)\),
+then \(\mathcal U_{\mathcal H}(\theta)=\{(x,y,t):t\in \mathcal H_\kappa(y)\}\).
+
+We use the Pearson chi-square convention
+\[
+    \chi^2(P\|Q)
+    :=
+    \int \left(\frac{dP}{dQ}-1\right)^2\,dQ,
+\]
+with \(\chi^2(P\|Q)=+\infty\) when \(P\) is not absolutely continuous with
+respect to \(Q\).
+
+\begin{theorem}[Retained \(\mathcal H_\kappa\)-tokens can induce arbitrarily large prefix chi-square divergence]
+\label{thm:retained-H-chi2}
+Let
+\[
+    m_{\mathcal H}
+    :=
+    \nu_\beta(\mathcal U_{\mathcal H}),
+    \qquad
+    q_{\mathcal H}
+    :=
+    \nu_\theta^{\mathrm{pre}}(\mathcal U_{\mathcal H})
+    =
+    \mathbb E_{\nu_\beta}
+    \left[
+        R_{t-1}(\theta)\mathbf 1\{(x,y,t)\in\mathcal U_{\mathcal H}\}
+    \right].
+\]
+Assume \(m_{\mathcal H}>0\) and
+\[
+    q_{\mathcal H} \le r\,m_{\mathcal H}
+    \qquad\text{for some } r\in(0,1).
+\]
+Then
+\[
+    \chi^2\!\left(\nu_\beta\middle\|\nu_\theta^{\mathrm{pre}}\right)
+    \ge
+    \chi^2\!\left(
+        \mathrm{Bern}(m_{\mathcal H})
+        \middle\|
+        \mathrm{Bern}(q_{\mathcal H})
+    \right)
+    =
+    \frac{(m_{\mathcal H}-q_{\mathcal H})^2}{q_{\mathcal H}(1-q_{\mathcal H})}.
+\]
+Consequently,
+\[
+    \chi^2\!\left(\nu_\beta\middle\|\nu_\theta^{\mathrm{pre}}\right)
+    \ge
+    \frac{m_{\mathcal H}(1-r)^2}{r}.
+\]
+In particular, for fixed \(m_{\mathcal H}>0\), the lower bound diverges as
+\(r\downarrow 0\). If \(q_{\mathcal H}=0<m_{\mathcal H}\), then
+\[
+    \chi^2\!\left(\nu_\beta\middle\|\nu_\theta^{\mathrm{pre}}\right)
+    =
+    +\infty .
+\]
+\end{theorem}
+
+\begin{proof}
+Let \(P=\nu_\beta\), \(Q=\nu_\theta^{\mathrm{pre}}\), and
+\(U=\mathcal U_{\mathcal H}\). If \(Q(U)=0<P(U)\), then \(P\) is not absolutely continuous
+with respect to \(Q\), so \(\chi^2(P\|Q)=+\infty\).
+
+Now assume \(q_{\mathcal H}=Q(U)>0\). Let \(L=dP/dQ\). By Cauchy--Schwarz,
+\[
+    \int_U L^2\,dQ
+    \ge
+    \frac{\left(\int_U L\,dQ\right)^2}{Q(U)}
+    =
+    \frac{P(U)^2}{Q(U)}
+    =
+    \frac{m_{\mathcal H}^2}{q_{\mathcal H}}.
+\]
+Applying the same argument to \(U^c\),
+\[
+    \int_{U^c} L^2\,dQ
+    \ge
+    \frac{P(U^c)^2}{Q(U^c)}
+    =
+    \frac{(1-m_{\mathcal H})^2}{1-q_{\mathcal H}}.
+\]
+Therefore,
+\[
+\begin{aligned}
+    \chi^2(P\|Q)
+    &=
+    \int L^2\,dQ -1 \\
+    &\ge
+    \frac{m_{\mathcal H}^2}{q_{\mathcal H}}
+    +
+    \frac{(1-m_{\mathcal H})^2}{1-q_{\mathcal H}}
+    -1 \\
+    &=
+    \frac{(m_{\mathcal H}-q_{\mathcal H})^2}{q_{\mathcal H}(1-q_{\mathcal H})}.
+\end{aligned}
+\]
+Using \(q_{\mathcal H}\le r m_{\mathcal H}\), we have
+\[
+    m_{\mathcal H}-q_{\mathcal H} \ge m_{\mathcal H}(1-r),
+    \qquad
+    q_{\mathcal H}(1-q_{\mathcal H})\le q_{\mathcal H} \le r m_{\mathcal H}.
+\]
+Thus
+\[
+    \chi^2(P\|Q)
+    \ge
+    \frac{m_{\mathcal H}^2(1-r)^2}{r m_{\mathcal H}}
+    =
+    \frac{m_{\mathcal H}(1-r)^2}{r}.
+\]
+This proves the claim.
+\end{proof}
+
+\begin{corollary}[The blow-up is compatible with non-tiny local ratios]
+\label{cor:non-tiny-local-ratio}
+Fix any threshold \(\tau_c\in(0,1]\) and any target \(M>0\). There exist
+behavior and current policies \(\beta\) and \(\pi_\theta\), and a retained
+harmful suffix set \(\mathcal U_{\mathcal H}\), such that every retained suffix token in
+\(\mathcal U_{\mathcal H}\) satisfies
+\[
+    \rho_t(\theta)\ge \tau_c,
+\]
+but
+\[
+    \chi^2\!\left(\nu_\beta\middle\|\nu_\theta^{\mathrm{pre}}\right)
+    >
+    M.
+\]
+\end{corollary}
+
+\begin{proof}
+Consider one prompt and two token positions. Let the first-token vocabulary
+contain two tokens \(c\) and \(b\). Choose \(m\in(0,1)\), and choose
+\[
+    r < \min\{\tau_c,\,1/2,\,\lambda_2 m/(4M)\},
+\]
+where \(\lambda_2>0\) is the position weight assigned to the second token.
+
+Let
+\[
+    \beta(c\mid x)=m,
+    \qquad
+    \pi_\theta(c\mid x)=rm,
+\]
+with the remaining probability assigned to \(b\). After prefix \(c\), let both
+policies deterministically emit the second token \(h\):
+\[
+    \beta(h\mid x,c)=1,
+    \qquad
+    \pi_\theta(h\mid x,c)=1.
+\]
+Assign negative advantage to the trajectory \(y=(c,h)\), i.e.,
+\(A(y)<0\).
+
+For \(y=(c,h)\), the first token has
+\[
+    \rho_1(\theta)
+    =
+    \frac{\pi_\theta(c\mid x)}{\beta(c\mid x)}
+    =
+    r
+    <
+    \tau_c,
+\]
+so \(\kappa(y)=1\). The second token has
+\[
+    \rho_2(\theta)
+    =
+    \frac{\pi_\theta(h\mid x,c)}{\beta(h\mid x,c)}
+    =
+    1
+    \ge
+    \tau_c,
+\]
+so \(2\in \mathcal H_\kappa(y)\). Its prefix occupancy is
+\[
+    R_1(\theta)=\rho_1(\theta)=r.
+\]
+Let the update rule retain this second-token occurrence, and define
+\[
+    \mathcal U_{\mathcal H}=\{(x,(c,h),2)\}.
+\]
+Then
+\[
+    m_{\mathcal H}=\nu_\beta(\mathcal U_{\mathcal H})=\lambda_2 m,
+    \qquad
+    q_{\mathcal H}=\nu_\theta^{\mathrm{pre}}(\mathcal U_{\mathcal H})=\lambda_2 r m.
+\]
+By Theorem~\ref{thm:retained-H-chi2},
+\[
+    \chi^2\!\left(\nu_\beta\middle\|\nu_\theta^{\mathrm{pre}}\right)
+    \ge
+    \frac{\lambda_2 m(1-r)^2}{r}.
+\]
+Since \(r<1/2\), \((1-r)^2>1/4\), and therefore
+\[
+    \chi^2\!\left(\nu_\beta\middle\|\nu_\theta^{\mathrm{pre}}\right)
+    >
+    \frac{\lambda_2 m}{4r}
+    >
+    M.
+\]
+Thus the retained token can have a perfectly benign local ratio
+\(\rho_2(\theta)=1\), while the induced prefix mismatch is arbitrarily large.
+\end{proof}
+
+\begin{remark}[Direction of the Pearson divergence]
+\label{rem:chi2-direction}
+The divergence in Theorem~\ref{thm:retained-H-chi2} is the reverse Pearson
+divergence \(\chi^2(\nu_\beta\|\nu_\theta^{\mathrm{pre}})\), which is sensitive
+to behavior-supported prefixes that have very small current occupancy. The
+opposite direction satisfies
+\[
+    \chi^2\!\left(\nu_\theta^{\mathrm{pre}}\middle\|\nu_\beta\right)
+    =
+    \mathbb E_{\nu_\beta}
+    \left[
+        \left(R_{t-1}(\theta)-1\right)^2
+    \right],
+\]
+so \(R_{t-1}\ll 1\) on a set of fixed behavior mass does not by itself force an
+unbounded contribution in that direction. This is why the missing-support
+statement should be phrased as a behavior-to-current, or reverse-Pearson,
+prefix divergence.
+\end{remark}
